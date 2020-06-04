@@ -15,7 +15,7 @@ void calibBoardCornersMouseCallback(int event, int x, int y, int flags,
     cv::vector<cv::Point2f> *corners = (cv::vector<cv::Point2f> *)param;
 
     switch (event) {
-        case CV_EVENT_LBUTTONDOWN:
+    case cv::EVENT_LBUTTONDOWN:
             if (corners->size() < 4)
                 corners->push_back(cv::Point(x, y));
             else
@@ -28,9 +28,10 @@ void calibBoardCornersMouseCallback(int event, int x, int y, int flags,
  */
 void imagePointReturn(int event, int x, int y, int flags, void *param)
 {
-    CvScalar *point = (CvScalar *)param;
+//    CvScalar *point = (CvScalar *)param;
+    cv::Scalar* point = (cv::Scalar*)param;
     switch (event) {
-        case CV_EVENT_LBUTTONDOWN:
+    case cv::EVENT_LBUTTONDOWN:
             point->val[0] = x;
             point->val[1] = y;
             point->val[2] = 1;
@@ -46,7 +47,7 @@ cv::vector<cv::Point2f> Calibrator::manualMarkCheckBoard(cv::Mat img)
 {
     cv::vector<cv::Point2f> corners;
 
-    cv::namedWindow("Mark Calibration Board", CV_WINDOW_NORMAL);
+    cv::namedWindow("Mark Calibration Board", cv::WINDOW_NORMAL);
     cv::resizeWindow("Mark Calibration Board", WINDOW_WIDTH, WINDOW_HEIGHT);
     // Set a mouse callback
     cv::setMouseCallback("Mark Calibration Board",
@@ -70,12 +71,12 @@ cv::vector<cv::Point2f> Calibrator::manualMarkCheckBoard(cv::Mat img)
                 int s = corners.size();
 
                 cv::rectangle(img_copy, corners[s - 1] - rectSize,
-                              corners[s - 1] + rectSize, cvScalar(0, 0, 255),
+                              corners[s - 1] + rectSize, cv::Scalar(0, 0, 255),
                               3);
 
                 if (!(corners.size() == 1)) {
                     cv::line(img_copy, corners[s - 1], corners[s - 2],
-                             cvScalar(0, 0, 255), 3);
+                             cv::Scalar(0, 0, 255), 3);
                 }
 
                 curNumOfCorners++;
@@ -92,9 +93,9 @@ cv::vector<cv::Point2f> Calibrator::manualMarkCheckBoard(cv::Mat img)
 
         // Draw corners and lines
         cv::rectangle(img_copy, corners[3] - rectSize, corners[3] + rectSize,
-                      cvScalar(0, 0, 255), 3);
-        cv::line(img_copy, corners[3], corners[2], cvScalar(0, 0, 255), 10);
-        cv::line(img_copy, corners[3], corners[0], cvScalar(0, 0, 255), 10);
+                      cv::Scalar(0, 0, 255), 3);
+        cv::line(img_copy, corners[3], corners[2], cv::Scalar(0, 0, 255), 10);
+        cv::line(img_copy, corners[3], corners[0], cv::Scalar(0, 0, 255), 10);
 
         int key = 0;
 
@@ -143,7 +144,7 @@ void drawOutsideOfRectangle(cv::Mat img,
 float Calibrator::markWhite(const cv::Mat &img)
 {
     float white = 0.0;
-    cv::namedWindow("Mark White", CV_WINDOW_NORMAL);
+    cv::namedWindow("Mark White", cv::WINDOW_NORMAL);
     cv::resizeWindow("Mark White", WINDOW_WIDTH, WINDOW_HEIGHT);
 
     cv::Scalar point;
@@ -162,9 +163,9 @@ float Calibrator::markWhite(const cv::Mat &img)
         while (pointsCount < 1) {
             if (point.val[2] == 1) {
                 cv::rectangle(img_copy,
-                              cvPoint(point.val[0] - 10, point.val[1] - 10),
-                              cvPoint(point.val[0] + 10, point.val[1] + 10),
-                              cvScalar(0, 0, 255), 3);
+                              cv::Point(point.val[0] - 10, point.val[1] - 10),
+                              cv::Point(point.val[0] + 10, point.val[1] + 10),
+                              cv::Scalar(0, 0, 255), 3);
 
                 white = img.at<uchar>(point.val[1], point.val[0]);
 
@@ -193,7 +194,7 @@ float Calibrator::markWhite(const cv::Mat &img)
         img_copy.release();
     }
 
-    cvDestroyWindow("Mark White");
+    cv::destroyWindow("Mark White");
 
     return white;
 }
@@ -225,7 +226,7 @@ bool Calibrator::findCornersInCamImg(const cv::Mat &img,
 
         // show img to user
         // Create an async task to show image
-        cv::namedWindow("Calibration", CV_WINDOW_NORMAL);
+        cv::namedWindow("Calibration", cv::WINDOW_NORMAL);
         cv::resizeWindow("Calibration", WINDOW_WIDTH, WINDOW_HEIGHT);
         // closeAsynImg = false;
         numOfCornersX = 5;
@@ -249,8 +250,8 @@ bool Calibrator::findCornersInCamImg(const cv::Mat &img,
         numOfCornersY--;
 
         found = cv::findChessboardCorners(
-            img_grey, cvSize(numOfCornersX, numOfCornersY), camCorners,
-            CV_CALIB_CB_ADAPTIVE_THRESH);
+            img_grey, cv::Size(numOfCornersX, numOfCornersY), camCorners,
+            cv::ADAPTIVE_THRESH_MEAN_C);
 
         std::cout << "found = " << camCorners.size() << "\n";
 
@@ -260,10 +261,10 @@ bool Calibrator::findCornersInCamImg(const cv::Mat &img,
 
         while (found) {
             cv::destroyWindow("Calibration");
-            cv::namedWindow("Calibration", CV_WINDOW_NORMAL);
+            cv::namedWindow("Calibration", cv::WINDOW_NORMAL);
             cv::resizeWindow("Calibration", WINDOW_WIDTH, WINDOW_HEIGHT);
             cv::drawChessboardCorners(img_copy,
-                                      cvSize(numOfCornersX, numOfCornersY),
+                                      cv::Size(numOfCornersX, numOfCornersY),
                                       camCorners, found);
 
             showImgWithText_Block(img_copy,
@@ -286,8 +287,8 @@ bool Calibrator::findCornersInCamImg(const cv::Mat &img,
     if (found) {
         // find sub pix of the corners
         cv::cornerSubPix(
-            img_grey, camCorners, cvSize(20, 20), cvSize(-1, -1),
-            cvTermCriteria(CV_TERMCRIT_EPS + CV_TERMCRIT_ITER, 30, 0.1));
+            img_grey, camCorners, cv::Size(20, 20), cv::Size(-1, -1),
+            cv::TermCriteria(cv::TermCriteria::EPS + cv::TermCriteria::MAX_ITER, 30, 0.1));
 
         if (squareSize.height == 0) {
             std::cout << "Give square height in mm: ";
